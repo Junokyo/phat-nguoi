@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<!-- Bản demo giao diện. Dashboard thật: web/admin/ (server Node) -->
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Quản trị quảng cáo – Phạt Nguội (bản demo)</title>
+<link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+<style>
+:root {
+  --red: #d0011b; --red-soft: #fdecee; --ink: #16181d; --muted: #5f6570; --line: #e6e8ec; --bg: #f5f6f8;
+  --blue: #1a73e8; --green: #0f9d58; --amber: #b06000; --shopee: #ee4d2d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--blue); }
+
+/* Thanh trên */
+.top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; white-space: nowrap; }
+.brand-logo { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--red); color: #fff; font-size: 15px; }
+.brand small { font-weight: 500; color: var(--muted); }
+.demo-flag { padding: 2px 8px; border-radius: 99px; background: #fff4d6; color: var(--amber); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.save-state { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.save-state.dirty { color: var(--amber); font-weight: 600; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--line); background: #fff; font-weight: 600; white-space: nowrap; }
+.btn:hover { border-color: #cfd3da; }
+.btn-primary { background: var(--red); border-color: var(--red); color: #fff; }
+.btn-primary:hover { background: #b80018; }
+.btn-sm { height: 30px; padding: 0 10px; font-size: 13px; border-radius: 8px; }
+
+/* Khung chính */
+.shell { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 56px); }
+.nav { padding: 16px 10px; background: #fff; border-right: 1px solid var(--line); }
+.nav button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; margin-bottom: 2px; border: 0; border-radius: 9px; background: none; text-align: left; font-weight: 600; color: #3c4048; }
+.nav button:hover { background: var(--bg); }
+.nav button.active { background: var(--red-soft); color: var(--red); }
+.nav .ico { width: 20px; text-align: center; }
+.nav .count { margin-left: auto; min-width: 22px; padding: 0 6px; border-radius: 99px; background: #fff4d6; color: var(--amber); font-size: 12px; text-align: center; }
+main { min-width: 0; padding: 20px; }
+.page { display: none; }
+.page.active { display: block; }
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
+.page-head h1 { margin: 0; font-size: 20px; }
+.page-head p { margin: 2px 0 0; color: var(--muted); }
+
+/* Tổng quan vị trí */
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start; }
+.preview-card, .panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--bg); }
+.seg button { height: 30px; padding: 0 12px; border: 0; border-radius: 8px; background: none; font-weight: 600; color: var(--muted); }
+.seg button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.hint { color: var(--muted); font-size: 13px; }
+.stage { position: relative; display: flex; justify-content: center; padding: 18px; background: repeating-conic-gradient(#f3f4f6 0 25%, #fafafa 0 50%) 0 0/24px 24px; border-radius: 0 0 14px 14px; overflow: hidden; }
+.phone { width: 390px; height: 780px; border: 10px solid #1c1d21; border-radius: 42px; overflow: hidden; background: #fff; box-shadow: 0 20px 50px -20px rgba(0,0,0,.45); }
+.phone iframe { width: 100%; height: 100%; border: 0; display: block; }
+.desk { width: 100%; }
+.desk-screen { position: relative; overflow: hidden; border: 1px solid #d6d9de; border-radius: 10px; background: #fff; box-shadow: 0 20px 50px -24px rgba(0,0,0,.4); }
+.desk-screen iframe { position: absolute; top: 0; left: 0; width: 1600px; height: 1000px; border: 0; transform-origin: 0 0; }
+.frame-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+
+.panel { position: sticky; top: 76px; max-height: calc(100vh - 96px); display: flex; flex-direction: column; overflow: hidden; }
+.panel-head { padding: 12px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
+.panel-head b { font-size: 15px; }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-left: auto; }
+.slot-list { overflow-y: auto; }
+.slot-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; border: 0; border-bottom: 1px solid #f0f1f3; background: #fff; text-align: left; }
+.slot-item:hover { background: #fafbfc; }
+.slot-item.sel { background: var(--red-soft); }
+.num { flex: none; display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 99px; background: var(--blue); color: #fff; font-weight: 800; font-size: 13px; }
+.slot-item.sel .num { background: var(--red); }
+.slot-meta { min-width: 0; flex: 1; }
+.slot-meta b { display: block; font-size: 14px; }
+.slot-meta small { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.src { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; white-space: nowrap; }
+.src-shopee { background: #fff0ec; color: var(--shopee); }
+.src-adsense { background: #e8f0fe; color: var(--blue); }
+.src-off { background: #f1f3f4; color: var(--muted); }
+.status { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.st-ok { color: var(--green); }
+.st-warn { color: var(--amber); }
+.st-off { color: var(--muted); }
+
+/* Form sửa vị trí */
+.editor { border-top: 1px solid var(--line); padding: 14px; overflow-y: auto; background: #fcfcfd; }
+.editor h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font-size: 16px; }
+.editor .where { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+.field { margin-bottom: 14px; }
+.field > label, .field > .label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 13px; }
+.field .help { margin-top: 5px; color: var(--muted); font-size: 12px; }
+.field .err { margin-top: 5px; color: var(--red); font-size: 12px; font-weight: 600; }
+input[type=text], input[type=url], input[type=number], input[type=email], input[type=password], textarea, select { width: 100%; height: 38px; padding: 0 11px; border: 1px solid #d6d9de; border-radius: 9px; background: #fff; }
+textarea { height: auto; padding: 9px 11px; }
+input:focus, textarea:focus, select:focus { outline: 2px solid rgba(208,1,27,.25); border-color: var(--red); }
+input.invalid { border-color: var(--red); background: #fff7f8; }
+.radios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.radios label { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px; border: 1px solid #d6d9de; border-radius: 10px; background: #fff; font-weight: 700; font-size: 13px; text-align: center; cursor: pointer; }
+.radios label small { font-weight: 500; color: var(--muted); font-size: 11px; }
+.radios input { display: none; }
+.radios label:has(input:checked) { border-color: var(--red); background: var(--red-soft); color: var(--red); }
+.drop, .field > label.drop { display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px dashed #cfd3da; border-radius: 12px; background: #fff; cursor: pointer; }
+.drop:hover, .drop.over { border-color: var(--red); background: var(--red-soft); }
+.drop .thumb { flex: none; width: 84px; height: 64px; border-radius: 8px; background: #f1f3f4 center/cover no-repeat; display: grid; place-items: center; color: var(--muted); font-size: 22px; }
+.drop b { display: block; font-size: 13px; }
+.drop small { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
+.or { margin: 8px 0; text-align: center; color: var(--muted); font-size: 12px; }
+.note { padding: 10px 12px; border-radius: 10px; background: #e8f0fe; color: #174ea6; font-size: 13px; }
+.note.warn { background: #fff4d6; color: #7a4a00; }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.switch input { appearance: none; flex: none; width: 42px; height: 24px; border-radius: 99px; background: #cfd3da; position: relative; cursor: pointer; transition: background .2s; }
+.switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.switch input:checked { background: var(--green); }
+.switch input:checked::after { transform: translateX(18px); }
+
+/* Các tab form */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.card h2 { margin: 0 0 4px; font-size: 16px; }
+.card > p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px; border-bottom: 1px solid #f0f1f3; text-align: left; vertical-align: middle; }
+th { font-size: 12px; color: var(--muted); font-weight: 700; }
+.deal-img { width: 56px; height: 56px; border-radius: 8px; background: #f1f3f4 center/cover; display: grid; place-items: center; color: var(--muted); cursor: pointer; border: 1px dashed #cfd3da; }
+.history li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f1f3; }
+.history ul { list-style: none; margin: 0; padding: 0; }
+.history small { color: var(--muted); }
+.history .btn { margin-left: auto; }
+pre.adstxt { margin: 0; padding: 10px; border-radius: 9px; background: #0f1115; color: #d1e7dd; font-size: 12px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; z-index: 50; transform: translate(-50%, 20px); opacity: 0; padding: 12px 16px; border-radius: 12px; background: #16181d; color: #fff; font-weight: 600; box-shadow: 0 12px 30px -10px rgba(0,0,0,.5); transition: .25s; max-width: calc(100% - 32px); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Điện thoại / màn hẹp */
+@media (max-width: 1100px) {
+  .overview { grid-template-columns: 1fr; }
+  .panel { position: static; max-height: none; }
+  /* Form sửa thành khung trượt từ dưới lên */
+  .editor { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; max-height: 80vh; border-radius: 18px 18px 0 0; box-shadow: 0 -12px 40px rgba(0,0,0,.3); transform: translateY(105%); transition: transform .25s ease; }
+  .editor.open { transform: none; }
+  .sheet-bg.open { display: block; }
+  .editor .sheet-close { display: inline-flex !important; }
+}
+.sheet-bg { display: none; position: fixed; inset: 0; z-index: 39; background: rgba(15,17,21,.45); }
+.sheet-close { display: none !important; float: right; }
+.lbl-short { display: none; }
+@media (max-width: 760px) {
+  .shell { grid-template-columns: 1fr; }
+  .nav { display: flex; gap: 4px; overflow-x: auto; padding: 8px; border-right: 0; border-bottom: 1px solid var(--line); position: sticky; top: 56px; z-index: 15; }
+  .nav button { width: auto; flex: none; margin: 0; white-space: nowrap; }
+  .nav .count { margin-left: 4px; }
+  main { padding: 12px; }
+  .brand small, .save-state { display: none; }
+  .stage { padding: 10px; }
+  .phone { width: 100%; max-width: 390px; height: 640px; border-width: 6px; border-radius: 28px; }
+  .cards { grid-template-columns: 1fr; }
+  .row2 { grid-template-columns: 1fr; }
+  #btn-view { display: none; }
+  .demo-flag { font-size: 10px; padding: 2px 6px; }
+  .brand { font-size: 14px; }
+  .lbl-long { display: none; }
+  .lbl-short { display: inline; }
+}
+
+/* ---- Bản chỉnh hiển thị ---- */
+.i { width: 18px; height: 18px; flex: none; }
+.nav button .i { color: #8a8f98; }
+.nav button.active .i { color: var(--red); }
+.seg button { display: inline-flex; align-items: center; gap: 6px; }
+.seg .i { width: 16px; height: 16px; }
+.btn .i { width: 16px; height: 16px; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; text-align: left; transition: border-color .15s, box-shadow .15s; }
+.stat:hover { border-color: #cfd3da; }
+.stat.active { border-color: var(--red); box-shadow: 0 0 0 3px rgba(208,1,27,.12); }
+.stat b { font-size: 24px; line-height: 1.1; }
+.stat span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block; }
+.stat .dot { color: var(--c); }
+.group-head { position: sticky; top: 0; z-index: 1; padding: 8px 14px; background: #f8f9fa; border-bottom: 1px solid #f0f1f3; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.slot-item { min-height: 58px; }
+.slot-side { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.status { display: inline-flex; align-items: center; gap: 5px; }
+.status .dot { width: 7px; height: 7px; }
+.empty-list { padding: 24px 14px; color: var(--muted); text-align: center; }
+.ed-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.ed-head h3 { margin: 0; }
+.ed-back { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 12px; border: 1px solid #f3b8c0; border-radius: 10px; background: var(--red-soft); color: var(--red); font-weight: 700; font-size: 14px; }
+.ed-back:hover { background: #fbdde1; }
+.ed-back .i { width: 16px; height: 16px; }
+.ed-size { display: inline-flex; margin-top: 4px; padding: 2px 8px; border-radius: 6px; background: #f1f3f4; font-size: 12px; font-weight: 700; color: #3c4048; }
+.drop { align-items: center; }
+.drop .thumb { width: 120px; height: auto; font-size: 0; border: 1px solid var(--line); background-color: #f8f9fa; color: #9aa0a6; }
+.drop .thumb .i { width: 24px; height: 24px; }
+.drop .thumb.has-img .i { display: none; }
+.drop-cta { display: inline-flex; align-items: center; gap: 6px; }
+@media (min-width: 1101px) {
+  .panel { height: calc(100vh - 96px); }
+  .panel-list { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .panel.editing .panel-list { display: none; }
+  .panel:not(.editing) .editor { display: none; }
+  .panel.editing .editor { flex: 1; border-top: 0; background: #fff; padding: 16px; }
+  .sheet-hint { display: none; }
+}
+@media (max-width: 1100px) {
+  .ed-back .lbl-desk { display: none; }
+}
+@media (min-width: 1101px) {
+  .ed-back .lbl-mob { display: none; }
+}
+@media (max-width: 760px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .stat { padding: 10px 12px; }
+  .stat b { font-size: 20px; }
+}
+
+/* ---- Đăng nhập + 2FA ---- */
+[hidden] { display: none !important; }
+body.locked { overflow: hidden; }
+.login { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 20% 10%, #fff 0, #f5f6f8 60%); }
+.login-card { width: 100%; max-width: 400px; padding: 28px 24px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 24px 60px -30px rgba(0,0,0,.35); }
+.login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; font-weight: 800; font-size: 17px; }
+.login-card h1 { margin: 0 0 4px; font-size: 20px; }
+.login-card > p, .login-step > p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+.login .field input { height: 44px; font-size: 15px; }
+.login .btn-primary { width: 100%; justify-content: center; height: 46px; font-size: 15px; border-radius: 10px; }
+.login-err { margin: -4px 0 12px; padding: 9px 12px; border-radius: 9px; background: #fff1f2; color: var(--red); font-size: 13px; font-weight: 600; }
+.login-foot { margin-top: 16px; color: var(--muted); font-size: 12px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.login-foot .i { width: 14px; height: 14px; }
+.demo-cred { margin-top: 14px; padding: 9px 12px; border-radius: 9px; background: #fff4d6; color: #7a4a00; font-size: 12px; }
+.otp { display: flex; justify-content: space-between; gap: 8px; margin: 6px 0 14px; }
+.otp input { width: 100%; max-width: 50px; height: 56px; padding: 0; text-align: center; font-size: 24px; font-weight: 800; border-radius: 10px; }
+.otp-app { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; background: #f1f8f4; color: #0b5d34; font-size: 13px; }
+.otp-app .i { width: 22px; height: 22px; }
+.check { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 13px; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--blue); font-weight: 600; font-size: 13px; }
+.user { position: relative; }
+.user-menu { position: absolute; right: 0; top: calc(100% + 6px); width: 220px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: 0 16px 40px -16px rgba(0,0,0,.35); }
+.user-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: none; text-align: left; font-weight: 600; }
+.user-menu button:hover { background: var(--bg); }
+.user-menu .sep { height: 1px; margin: 4px 0; background: var(--line); }
+.user-menu small { display: block; padding: 6px 10px; color: var(--muted); }
+/* Trang bảo mật */
+.ok-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; background: #e6f4ea; color: #0f7a45; font-weight: 700; font-size: 12px; }
+.qr-wrap { display: flex; gap: 14px; align-items: center; margin: 12px 0; }
+.qr-wrap canvas { flex: none; width: 132px; height: 132px; border: 1px solid var(--line); border-radius: 10px; image-rendering: pixelated; }
+.secret { font-family: ui-monospace, Consolas, monospace; font-size: 14px; letter-spacing: .08em; padding: 6px 10px; border-radius: 8px; background: #f1f3f4; display: inline-block; }
+.codes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+.codes span { padding: 6px 10px; border-radius: 8px; background: #f8f9fa; border: 1px dashed #d6d9de; text-align: center; }
+.codes span.used { text-decoration: line-through; color: #9aa0a6; }
+.sess { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f1f3; }
+.sess .i { width: 22px; height: 22px; color: var(--muted); }
+.sess b { display: block; font-size: 14px; }
+.sess small { color: var(--muted); }
+.sess .btn { margin-left: auto; }
+.tag-me { padding: 1px 8px; border-radius: 99px; background: #e8f0fe; color: var(--blue); font-size: 11px; font-weight: 700; margin-left: 6px; }
+.res-ok { color: #0f7a45; font-weight: 700; } .res-bad { color: var(--red); font-weight: 700; } .res-lock { color: var(--amber); font-weight: 700; }
+.meter { height: 6px; margin-top: 6px; border-radius: 99px; background: #eef0f2; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--red); transition: width .2s, background .2s; }
+@media (max-width: 760px) { .user-name { display: none; } .otp input { height: 50px; font-size: 22px; } }
+
+/* ---- Kích thước banner ---- */
+.sizes { display: grid; gap: 6px; margin-top: 8px; }
+.size-row { display: grid; grid-template-columns: 20px auto 1fr; align-items: center; column-gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.size-row .i { width: 18px; height: 18px; color: var(--muted); }
+.size-row span { font-weight: 600; font-size: 13px; }
+.size-row b { justify-self: end; font-size: 15px; font-variant-numeric: tabular-nums; }
+.size-row small { grid-column: 2 / -1; color: var(--muted); font-size: 12px; }
+.dev-label { display: flex; align-items: center; gap: 6px; margin: 12px 0 6px; font-weight: 700; font-size: 13px; }
+.dev-label .i { width: 16px; height: 16px; color: var(--muted); }
+.dev-label b { margin-left: auto; padding: 1px 8px; border-radius: 6px; background: #f1f3f4; font-size: 12px; }
+.size-table td, .size-table th { white-space: nowrap; }
+.size-table td small { display: block; color: var(--muted); font-size: 12px; white-space: normal; }
+.size-table .num { width: 26px; }
+.size-table b { font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; }
+.std { display: inline-block; margin-top: 2px; padding: 0 6px; border-radius: 5px; background: #e8f0fe; color: #174ea6; font-size: 11px; font-weight: 700; }
+
+/* ---- Trang Kích thước: bộ ảnh + thẻ theo nhóm vị trí ---- */
+.kit-summary { margin-bottom: 14px; padding: 18px; border-radius: 16px; background: linear-gradient(135deg, #fff5f2, #fff); border: 1px solid #ffd9cc; }
+.kit-summary-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.kit-summary h2 { margin: 0 0 2px; font-size: 17px; }
+.kit-summary p { margin: 0; color: var(--muted); }
+.kit-progress { margin-left: auto; padding: 4px 12px; border-radius: 99px; background: #fff; border: 1px solid #ffd9cc; font-weight: 800; color: var(--shopee); white-space: nowrap; }
+.kit-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.kit-file { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 10px 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer; text-align: center; transition: border-color .15s, background .15s; }
+.kit-file:hover { border-color: #f0a58f; }
+.kit-file input { position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; accent-color: var(--green); }
+.kit-file.done { background: #f1f8f4; border-color: #b7e1c7; }
+.kit-file.done .shape { opacity: .5; }
+.kit-file b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.kit-file small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.kit-note { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.kit-note > div { padding: 12px 14px; border-radius: 12px; background: #fff; border: 1px solid var(--line); color: #3c4048; font-size: 13px; }
+.kits { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+.kit { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.kit-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.kit-head h3 { margin: 0; font-size: 15px; }
+.kit-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.kit-nums { display: flex; flex-wrap: wrap; gap: 4px; flex: none; max-width: 120px; }
+.kit-nums .num { min-width: 24px; height: 24px; font-size: 12px; }
+.kit-src { margin-left: auto; flex: none; }
+.kit-devs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kit-devs.one { grid-template-columns: 1fr; }
+.dev-box { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: #f8f9fa; }
+.dev-box-head { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.dev-box-head .i { width: 15px; height: 15px; }
+.stage-shape { display: grid; place-items: center; height: 110px; overflow: hidden; }
+.shape { display: grid; place-items: center; border-radius: 6px; border: 2px dashed var(--shopee); background: repeating-linear-gradient(135deg, #fff1ec 0 8px, #fff 8px 16px); color: var(--shopee); font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; }
+.shape.ads { border-color: var(--blue); background: repeating-linear-gradient(135deg, #eef3fe 0 8px, #fff 8px 16px); color: var(--blue); }
+.dev-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.dev-meta b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.dev-meta small { width: 100%; color: var(--muted); font-size: 12px; }
+.dev-none { display: grid; place-items: center; height: 100%; min-height: 150px; color: var(--muted); font-size: 13px; text-align: center; }
+.ads-alt { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #eef3fe; color: #174ea6; font-size: 13px; }
+@media (max-width: 760px) {
+  .kits { grid-template-columns: 1fr; }
+  .kit-note { grid-template-columns: 1fr; }
+  .kit-devs { grid-template-columns: 1fr; }
+  .kit-files { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body class="locked">
+
+<div class="login" id="login">
+  <div class="login-card">
+    <div class="login-logo"><span class="brand-logo">PN</span>Phạt Nguội · Quản trị</div>
+
+    <form class="login-step" data-step="pass" id="f-pass" novalidate>
+      <h1>Đăng nhập</h1>
+      <p>Chỉ dành cho quản trị viên của site.</p>
+      <div class="login-err" id="err-pass" hidden></div>
+      <div class="field"><label for="lg-user">Tên đăng nhập</label><input type="text" id="lg-user" autocomplete="username" required></div>
+      <div class="field"><label for="lg-pass">Mật khẩu</label><input type="password" id="lg-pass" autocomplete="current-password" required></div>
+      <button class="btn btn-primary" id="btn-login">Tiếp tục</button>
+      <div class="demo-cred">Bản demo: tên <b>admin</b> · mật khẩu <b>demo123</b></div>
+    </form>
+
+    <form class="login-step" data-step="otp" id="f-otp" hidden novalidate>
+      <h1>Xác minh 2 bước</h1>
+      <p>Mở ứng dụng <b>Google Authenticator</b> (hoặc Authy) trên điện thoại và nhập mã 6 số của "Phạt Nguội".</p>
+      <div class="otp-app"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3z"/><path d="m9 12 2 2 4-4"/></svg>Mã đổi mỗi 30 giây — kẻ lấy được mật khẩu vẫn không vào được nếu không có điện thoại của bạn.</div>
+      <div class="login-err" id="err-otp" hidden></div>
+      <div class="otp" id="otp"><input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Chữ số"><input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Chữ số"><input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Chữ số"><input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Chữ số"><input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Chữ số"><input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Chữ số"></div>
+      <div class="field" id="backup-field" hidden><label for="lg-backup">Mã dự phòng</label><input type="text" id="lg-backup" placeholder="XXXX-XXXX"></div>
+      <label class="check"><input type="checkbox" checked> Tin cậy thiết bị này 30 ngày</label>
+      <button class="btn btn-primary">Xác minh</button>
+      <div class="login-foot"><button type="button" class="linkbtn" id="use-backup">Mất điện thoại? Dùng mã dự phòng</button></div>
+      <div class="demo-cred">Bản demo: nhập 6 số bất kỳ (trừ 000000)</div>
+    </form>
+
+    <div class="login-foot"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Kết nối được mã hoá · sai 5 lần sẽ tạm khoá 15 phút</div>
+  </div>
+</div>
+
+<header class="top">
+  <div class="brand"><span class="brand-logo">PN</span>Phạt Nguội <small>· Quản trị quảng cáo</small></div>
+  <span class="demo-flag">DEMO</span>
+  <div class="top-actions">
+    <span class="save-state" id="save-state">Đã lưu</span>
+    <a class="btn" id="btn-view" href="index.html" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M10 14 20 4"/><path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5"/></svg>Xem web</a>
+    <button class="btn btn-primary" id="btn-save"><span class="lbl-long">Lưu &amp; xuất bản</span><span class="lbl-short">Lưu</span></button>
+    <div class="user">
+      <button class="btn" id="user-btn" aria-haspopup="true"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="user-name">admin</span></button>
+      <div class="user-menu" id="user-menu" hidden>
+        <small>Đăng nhập từ 14.162.xx.xx · 2FA đang bật</small>
+        <button data-go="security"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3z"/><path d="m9 12 2 2 4-4"/></svg>Bảo mật tài khoản</button>
+        <div class="sep"></div>
+        <button id="logout"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="nav" id="nav">
+    <button data-tab="slots" class="active"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Vị trí quảng cáo <span class="count" id="warn-count">0</span></button>
+    <button data-tab="sizes"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2"/><path d="m10 10 2 2"/><path d="m13 7 2 2"/></svg>Kích thước banner</button>
+    <button data-tab="shopee"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12.1a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9L5 8z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg>Shopee &amp; deal</button>
+    <button data-tab="popup"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><rect x="7" y="8" width="10" height="8" rx="1"/></svg>Popup &amp; chuyển hướng</button>
+    <button data-tab="adsense"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11"/><path d="M10 20V5"/><path d="M16 20v-6"/><path d="M21 20H3"/></svg>Google AdSense</button>
+    <button data-tab="site"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9"/><path d="M17 6h3"/><circle cx="15" cy="6" r="2"/><path d="M4 12h3"/><path d="M11 12h9"/><circle cx="9" cy="12" r="2"/><path d="M4 18h11"/><path d="M19 18h1"/><circle cx="17" cy="18" r="2"/></svg>Thông tin site</button>
+    <button data-tab="security"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3z"/><path d="m9 12 2 2 4-4"/></svg>Bảo mật</button>
+    <button data-tab="history"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>Lịch sử lưu</button>
+  </nav>
+
+  <main>
+    <!-- ================= Vị trí quảng cáo ================= -->
+    <section class="page active" id="page-slots">
+      <div class="page-head">
+        <div>
+          <h1>Vị trí quảng cáo</h1>
+          <p>Bấm vào ô có số trên trang web hoặc trong danh sách để điền banner, link cho vị trí đó.</p>
+        </div>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="overview">
+        <div class="preview-card">
+          <div class="preview-bar">
+            <div class="seg" id="device">
+              <button data-dev="phone" class="active"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Điện thoại</button>
+              <button data-dev="desk"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>Máy tính</button>
+            </div>
+            <span class="hint">Trang web thật · cuộn để xem hết các vị trí</span>
+          </div>
+          <div class="stage" id="stage">
+            <div class="phone" id="phone"><iframe id="frame" title="Xem trước trang web"></iframe></div>
+          </div>
+        </div>
+
+        <aside class="panel" id="panel">
+          <div class="panel-list">
+            <div class="panel-head">
+              <b id="list-title">Tất cả vị trí</b>
+              <span class="legend"><span class="src src-shopee">Shopee</span><span class="src src-adsense">AdSense</span><span class="src src-off">Tắt</span></span>
+            </div>
+            <div class="slot-list" id="slot-list"></div>
+          </div>
+          <div class="editor" id="editor"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================= Shopee ================= -->
+    <section class="page" id="page-sizes">
+      <div class="page-head"><div><h1>Kích thước banner</h1><p>Gửi trang này cho người thiết kế. Mỗi khổ vẽ đúng tỉ lệ; xuất ảnh <b>gấp đôi</b> khổ ghi (vd 300×250 → 600×500) để nét trên điện thoại.</p></div></div>
+
+      <div class="kit-summary">
+        <div class="kit-summary-head">
+          <div><h2>Bộ ảnh Shopee cần làm</h2><p>Chỉ <b id="kit-count">7</b> khổ là đủ cho toàn bộ trang. Đánh dấu khi đã làm xong.</p></div>
+          <span class="kit-progress" id="kit-progress">0/7</span>
+        </div>
+        <div class="kit-files" id="kit-files"></div>
+      </div>
+
+      <div class="kit-note">
+        <div><b>Google AdSense</b> — không cần làm ảnh. Google tự chọn quảng cáo vừa khung (các khổ ra tiền nhiều nhất: 300×250, 336×280, 728×90, 300×600, 320×100).</div>
+        <div><b>Shopee Affiliate</b> — chỉ cấp link, không quy định khổ. Web dùng khổ chuẩn quốc tế (IAB) giống Google nên 1 bộ ảnh dùng được nhiều nơi.</div>
+      </div>
+
+      <div class="kits" id="kits"></div>
+    </section>
+
+    <section class="page" id="page-shopee">
+      <div class="page-head"><div><h1>Shopee &amp; deal</h1><p>Link tiếp thị dùng chung và các deal hiện trong banner, icon nổi, khối deal trong bài.</p></div></div>
+      <div class="cards">
+        <div class="card">
+          <h2>Link Shopee Affiliate chung</h2>
+          <p>Dùng cho mọi banner Shopee nếu vị trí đó không có link riêng.</p>
+          <div class="field">
+            <label for="shopee-link">Link (lấy trong tài khoản Shopee Affiliate)</label>
+            <input type="url" id="shopee-link" placeholder="https://s.shopee.vn/..." data-url>
+            <div class="help">Link rút gọn dạng s.shopee.vn/… để được tính hoa hồng.</div>
+          </div>
+          <div class="field">
+            <label for="yodi">Script Yodimedia (không bắt buộc)</label>
+            <input type="url" id="yodi" placeholder="https://jsc.yodimedia.com/code/.../xxx.js" data-url>
+            <div class="help">Có script này thì icon nổi dùng của Yodimedia thay cho icon tự làm.</div>
+          </div>
+        </div>
+        <div class="card" style="grid-column: 1 / -1">
+          <h2>Danh sách deal</h2>
+          <p>Ảnh + tên + giá + link từng sản phẩm. Hiện trong khối "Deal Shopee" giữa bài, banner tự dựng và icon nổi (mỗi lần tải trang 1 deal ngẫu nhiên).</p>
+          <table>
+            <thead><tr><th style="width:70px">Ảnh</th><th>Tên sản phẩm</th><th style="width:130px">Giá</th><th>Link Shopee</th><th style="width:40px"></th></tr></thead>
+            <tbody id="deals"></tbody>
+          </table>
+          <button class="btn btn-sm" id="add-deal" style="margin-top:10px">+ Thêm deal</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Popup ================= -->
+    <section class="page" id="page-popup">
+      <div class="page-head"><div><h1>Popup &amp; chuyển hướng</h1><p>Những thứ không nằm cố định trên trang.</p></div></div>
+      <div class="cards">
+        <div class="card">
+          <div class="switch"><h2>Popup Shopee toàn màn hình</h2><input type="checkbox" checked></div>
+          <p>Hiện sau vài giây. Người xem phải bấm "Xem deal" mới sang Shopee, bấm "Đóng" thì ở lại.</p>
+          <div class="row2">
+            <div class="field"><label>Hiện sau (giây)</label><input type="number" value="5" min="1"></div>
+            <div class="field"><label>Mỗi người 1 lần / (giờ)</label><input type="number" value="3" min="0"></div>
+          </div>
+          <div class="field"><label>Tiêu đề</label><input type="text" value="Săn deal phụ kiện xe giá sốc mỗi ngày"></div>
+          <div class="field"><label>Mô tả</label><input type="text" value="Phụ kiện ô tô, xe máy sale đến 50%. Freeship toàn quốc."></div>
+          <div class="help">Ảnh và link của popup: sửa ở tab Vị trí quảng cáo → vị trí số 16.</div>
+        </div>
+        <div class="card">
+          <div class="switch"><h2>Bấm TRA NGAY → sang Shopee</h2><input type="checkbox" checked></div>
+          <p>Sau khi tra, Shopee mở ở tab mới; trang tra cứu vẫn hiện kết quả. (Trình duyệt chặn tab mới, vd trong app Facebook/Zalo → chuyển cùng tab, bấm Back là quay lại.)</p>
+          <div class="field"><label>Mỗi người 1 lần / (giờ)</label><input type="number" value="2" min="0"><div class="help">0 = lần nào cũng chuyển (không nên — người dùng dễ bỏ đi).</div></div>
+          <div class="field"><label>Link riêng (để trống = dùng link Shopee chung)</label><input type="url" placeholder="https://s.shopee.vn/..." data-url></div>
+        </div>
+        <div class="card">
+          <div class="switch"><h2>Icon Shopee nổi</h2><input type="checkbox" checked></div>
+          <p>Ảnh tròn lắc như chuông ở góc phải, hiện sau khi người xem cuộn trang. Bấm hoặc đóng thì ẩn 2 giờ.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= AdSense ================= -->
+    <section class="page" id="page-adsense">
+      <div class="page-head"><div><h1>Google AdSense</h1><p>Điền mã một lần, mọi vị trí chọn nguồn "AdSense" sẽ chạy.</p></div></div>
+      <div class="cards">
+        <div class="card">
+          <h2>Mã tài khoản</h2>
+          <p>Lấy trong AdSense → Tài khoản → Thông tin tài khoản.</p>
+          <div class="field"><label for="ca-pub">Mã nhà xuất bản</label><input type="text" id="ca-pub" placeholder="ca-pub-1234567890123456"><div class="err" id="ca-pub-err" hidden>Mã phải có dạng ca-pub- và 16 chữ số.</div></div>
+          <div class="field"><label>Mã đơn vị quảng cáo (data-ad-slot) dùng chung</label><input type="text" placeholder="1234567890"><div class="help">Tạo 1 đơn vị "Quảng cáo hiển thị" dạng thích ứng rồi dán mã số vào đây.</div></div>
+          <div class="row2">
+            <div class="field"><label>Mã cho 2 cột dính</label><input type="text" placeholder="(để trống = dùng chung)"></div>
+            <div class="field"><label>Mã cho thanh neo</label><input type="text" placeholder="(để trống = dùng chung)"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>ads.txt</h2>
+          <p>Tự tạo từ mã nhà xuất bản — không cần làm gì thêm.</p>
+          <pre class="adstxt" id="adstxt">(điền mã nhà xuất bản để tạo)</pre>
+          <div class="note" style="margin-top:12px">Muốn giống trang mẫu: trong AdSense bật <b>Auto ads</b> + <b>Quảng cáo xen kẽ</b> + <b>Gợi ý tìm kiếm</b>. Google tự chèn thêm, không cần sửa ở đây.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Thông tin site ================= -->
+    <section class="page" id="page-site">
+      <div class="page-head"><div><h1>Thông tin site</h1><p>Hiện ở chân trang, trang Chính sách, Điều khoản, Liên hệ.</p></div></div>
+      <div class="cards">
+        <div class="card">
+          <div class="field"><label>Tên site</label><input type="text" value="Phạt Nguội"></div>
+          <div class="field"><label>Email liên hệ</label><input type="email" placeholder="lienhe@tenmien.vn"></div>
+          <div class="field"><label>Tên miền</label><input type="text" placeholder="phatnguoi.vn"><div class="help">Dùng cho link chia sẻ, sitemap, ảnh xem trước khi share Facebook/Zalo.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Lịch sử ================= -->
+    <section class="page" id="page-security">
+      <div class="page-head"><div><h1>Bảo mật</h1><p>Mật khẩu, xác minh 2 bước, thiết bị đang đăng nhập và nhật ký truy cập.</p></div></div>
+      <div class="cards">
+        <div class="card">
+          <h2>Xác minh 2 bước (2FA)</h2>
+          <p>Bắt buộc với mọi tài khoản quản trị.</p>
+          <span class="ok-badge"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3z"/><path d="m9 12 2 2 4-4"/></svg>Đang bật · Google Authenticator</span>
+          <div class="qr-wrap" id="qr-wrap" hidden>
+            <canvas id="qr" width="29" height="29" aria-label="Mã QR mẫu"></canvas>
+            <div><div class="hint">Quét bằng app, hoặc nhập khoá:</div><span class="secret">JBSW Y3DP EHPK 3PXP</span>
+              <div class="field" style="margin:10px 0 0"><label>Mã 6 số trên app để xác nhận</label><input type="text" inputmode="numeric" maxlength="6" placeholder="123456"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+            <button class="btn btn-sm" id="reset-2fa">Chuyển sang điện thoại mới</button>
+          </div>
+          <h2 style="margin-top:18px">Mã dự phòng</h2>
+          <p>Mỗi mã dùng 1 lần, khi mất điện thoại. In ra hoặc cất nơi an toàn.</p>
+          <div class="codes"><span>K7Q2-9XMP</span><span class="used">T4B8-2LNW</span><span>R9C1-6HZD</span><span>M3V7-8QAE</span><span>P2W6-4JKT</span><span>H8N5-1YFS</span><span>D6X3-7RBG</span><span>Z1L9-5UCV</span></div>
+          <button class="btn btn-sm" data-demo>Tạo bộ mã mới</button>
+        </div>
+
+        <div class="card">
+          <h2>Đổi mật khẩu</h2>
+          <p>Tối thiểu 10 ký tự. Đổi xong, các thiết bị khác bị đăng xuất.</p>
+          <div class="field"><label>Mật khẩu hiện tại</label><input type="password" autocomplete="current-password"></div>
+          <div class="field"><label>Mật khẩu mới</label><input type="password" id="new-pass" autocomplete="new-password"><div class="meter"><i id="meter"></i></div><div class="help" id="meter-text">Dùng cụm từ dài, trộn chữ hoa, số, ký tự đặc biệt.</div></div>
+          <div class="field"><label>Nhập lại mật khẩu mới</label><input type="password" autocomplete="new-password"></div>
+          <button class="btn btn-primary btn-sm" data-demo>Đổi mật khẩu</button>
+        </div>
+
+        <div class="card">
+          <h2>Thiết bị đang đăng nhập</h2>
+          <p>Thấy thiết bị lạ → đăng xuất nó và đổi mật khẩu ngay.</p>
+          <div class="sess"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg><div><b>Chrome · Windows<span class="tag-me">Thiết bị này</span></b><small>Hà Nội · 14.162.xx.xx · đang hoạt động</small></div></div>
+          <div class="sess"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><div><b>Safari · iPhone</b><small>TP.HCM · 113.161.xx.xx · 2 giờ trước</small></div><button class="btn btn-sm" data-demo>Đăng xuất</button></div>
+          <button class="btn btn-sm" style="margin-top:12px" data-demo>Đăng xuất tất cả thiết bị khác</button>
+        </div>
+
+        <div class="card">
+          <h2>Nhật ký đăng nhập</h2>
+          <p>50 lần gần nhất. Lần sai mật khẩu / bị khoá được đánh dấu.</p>
+          <table>
+            <thead><tr><th>Thời gian</th><th>IP</th><th>Kết quả</th></tr></thead>
+            <tbody>
+              <tr><td>Hôm nay 10:21</td><td>14.162.xx.xx</td><td class="res-ok">Thành công</td></tr>
+              <tr><td>Hôm nay 03:14</td><td>185.220.xx.xx</td><td class="res-lock">Bị khoá 15 phút</td></tr>
+              <tr><td>Hôm nay 03:13</td><td>185.220.xx.xx</td><td class="res-bad">Sai mật khẩu ×5</td></tr>
+              <tr><td>Hôm qua 21:02</td><td>113.161.xx.xx</td><td class="res-ok">Thành công</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="switch"><h2>Chỉ cho phép IP tin cậy</h2><input type="checkbox"></div>
+          <p>Tuỳ chọn: chỉ các IP dưới đây mới mở được trang quản trị (nhà, văn phòng). Để trống = không giới hạn.</p>
+          <textarea rows="3" placeholder="14.162.10.20&#10;113.161.0.0/16"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="page-history">
+      <div class="page-head"><div><h1>Lịch sử lưu</h1><p>10 lần lưu gần nhất. Lỡ sửa hỏng thì khôi phục bản trước.</p></div></div>
+      <div class="card history">
+        <ul>
+          <li><b>Hôm nay 10:24</b><small>Đổi banner "Đầu khung tra cứu"</small><span class="btn btn-sm" style="cursor:default">Đang dùng</span></li>
+          <li><b>Hôm qua 21:03</b><small>Thêm 2 deal Shopee</small><button class="btn btn-sm" data-restore>Khôi phục</button></li>
+          <li><b>28/09 16:40</b><small>Điền mã AdSense</small><button class="btn btn-sm" data-restore>Khôi phục</button></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="sheet-bg" id="sheet-bg"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Danh sách vị trí (khớp với trang web) ---------- */
+  var SLOTS = [
+    { key: "anchor", sel: ".ad-anchor", name: "Thanh neo", where: "Điện thoại: dính trên đầu màn hình · Máy tính: dính dưới đáy", size: "320×100 (điện thoại) · 728×90 (máy tính)", src: "shopee" },
+    { key: "in-lookup", sel: '.ad-slot[data-ad="in-lookup"]', name: "Đầu khung tra cứu", where: "Trên nền đỏ, ngay trên chữ \"Tra cứu phạt nguội\" — chỗ nổi nhất trang", size: "300×250 (điện thoại) · 1090×280 (máy tính)", src: "shopee" },
+    { key: "after-lookup", sel: '.ad-slot[data-ad="after-lookup"]', name: "Sau khung tra cứu", where: "Ngay dưới khung tra cứu", size: "Tự co giãn (AdSense)", src: "adsense" },
+    { key: "in-article-1", sel: '.ad-slot[data-ad="in-article-1"]', name: "Giữa bài 1", where: "Trước mục \"Ai nên kiểm tra\"", size: "Tự co giãn · điện thoại tràn ngang", src: "adsense" },
+    { key: "in-article-2", sel: '.ad-slot[data-ad="in-article-2"]', name: "Giữa bài 2", where: "Trước mục \"Khi nào nên tra cứu\"", size: "Tự co giãn · điện thoại tràn ngang", src: "adsense" },
+    { key: "in-article-3", sel: '.ad-slot[data-ad="in-article-3"]', name: "Giữa bài 3", where: "Trước mục \"Hướng dẫn tra cứu\"", size: "Tự co giãn · điện thoại tràn ngang", src: "adsense" },
+    { key: "in-article-4", sel: '.ad-slot[data-ad="in-article-4"]', name: "Giữa bài 4", where: "Trước mục \"Lỗi thường gặp\"", size: "Tự co giãn · điện thoại tràn ngang", src: "adsense" },
+    { key: "in-article-5", sel: '.ad-slot[data-ad="in-article-5"]', name: "Giữa bài 5", where: "Trước mục \"Làm gì khi có vi phạm\"", size: "Tự co giãn · điện thoại tràn ngang", src: "adsense" },
+    { key: "in-article-6", sel: '.ad-slot[data-ad="in-article-6"]', name: "Giữa bài 6", where: "Trước mục \"Nộp phạt ở đâu\"", size: "Tự co giãn · điện thoại tràn ngang", src: "adsense" },
+    { key: "shopee-inline", sel: '.ad-slot[data-ad="shopee-inline"]', name: "Khối deal Shopee", where: "Giữa bài, 4 sản phẩm lấy từ tab Shopee & deal", size: "Ảnh sản phẩm vuông ≥ 300×300", src: "deals" },
+    { key: "in-article-7", sel: '.ad-slot[data-ad="in-article-7"]', name: "Giữa bài 7", where: "Trước mục \"Lưu ý sau khi tra cứu\"", size: "Tự co giãn · điện thoại tràn ngang", src: "adsense" },
+    { key: "before-faq", sel: '.ad-slot[data-ad="before-faq"]', name: "Trước Hỏi đáp", where: "Ngay trên phần Câu hỏi thường gặp", size: "Tự co giãn", src: "adsense" },
+    { key: "after-faq", sel: '.ad-slot[data-ad="after-faq"]', name: "Sau Hỏi đáp", where: "Cuối bài", size: "Tự co giãn", src: "adsense" },
+    { key: "fly", sel: ".shopee-fly", name: "Icon Shopee nổi", where: "Góc phải, hiện khi người xem cuộn trang", size: "Ảnh vuông ≥ 200×200", src: "shopee" },
+    { key: "rail", sel: ".ad-rail", name: "2 cột dính 2 bên", where: "Chỉ trên màn hình máy tính rộng (≥ 1560px)", size: "160×600", src: "adsense", desk: true },
+    { key: "popup", sel: ".shopee-pop", name: "Popup toàn màn hình", where: "Hiện sau 5 giây (chỉnh ở tab Popup)", size: "Ảnh phần trên 1080×720", src: "shopee" },
+  ];
+  // Khổ banner theo thiết bị: [rộng, cao, tên chuẩn]. both = dùng chung 1 ảnh.
+  var SIZES = {
+    anchor: { mob: [320, 100, "Large Mobile Banner"], pc: [728, 90, "Leaderboard"] },
+    "in-lookup": { mob: [300, 250, "Medium Rectangle"], pc: [970, 250, "Billboard"] },
+    "shopee-inline": { both: [500, 500, "Ảnh sản phẩm vuông"] },
+    fly: { both: [200, 200, "Ảnh vuông · hiện 100×100"] },
+    rail: { pc: [160, 600, "Wide Skyscraper"] },
+    popup: { both: [1080, 720, "Tỉ lệ 3:2"] },
+  };
+  // Ô giữa bài: AdSense tự co giãn; nếu chọn banner Shopee thì dùng khổ này
+  var SIZE_INPAGE = { mob: [300, 250, "Medium Rectangle"], pc: [970, 250, "Billboard"] };
+  var ADSENSE_HINT = { mob: "300×250 · 336×280 (tràn ngang)", pc: "728×90 · 970×250 · 336×280" };
+  function sizesOf(s) { return SIZES[s.key] || SIZE_INPAGE; }
+  function wh(z) { return z[0] + "×" + z[1]; }
+  function sizeText(s) {
+    if (state[s.key] && state[s.key].src === "adsense") return "Tự co giãn · Google chọn khổ";
+    var z = sizesOf(s);
+    if (z.both) return wh(z.both) + " (chung)";
+    return [z.mob ? "ĐT " + wh(z.mob) : "", z.pc ? "PC " + wh(z.pc) : ""].filter(Boolean).join(" · ");
+  }
+  var ICON_PHONE = "<svg class=\"i\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"7\" y=\"2\" width=\"10\" height=\"20\" rx=\"2\"/><path d=\"M11 18h2\"/></svg>";
+  var ICON_DESK = "<svg class=\"i\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"13\" rx=\"2\"/><path d=\"M8 21h8\"/><path d=\"M12 17v4\"/></svg>";
+  var ICON_BOTH = "<svg class=\"i\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"2\" y=\"4\" width=\"14\" height=\"10\" rx=\"1.5\"/><path d=\"M6 18h6\"/><rect x=\"16\" y=\"9\" width=\"6\" height=\"11\" rx=\"1.5\"/></svg>";
+  var DEV = { mob: [ICON_PHONE, "Điện thoại"], pc: [ICON_DESK, "Máy tính"], both: [ICON_BOTH, "Điện thoại & máy tính (1 ảnh)"] };
+  function devKeys(s) { var z = sizesOf(s); return z.both ? ["both"] : ["mob", "pc"].filter(function (k) { return z[k]; }); }
+  // Nhóm vị trí dùng chung 1 bộ ảnh
+  var KITS = [
+    { keys: ["anchor"], title: "Thanh neo", desc: "Dính trên đầu màn hình (điện thoại) / dưới đáy (máy tính)" },
+    { keys: ["in-lookup"], title: "Đầu khung tra cứu", desc: "Trên nền đỏ, ngay trên chữ \"Tra cứu phạt nguội\" — chỗ nổi nhất trang" },
+    { keys: ["after-lookup", "in-article-1", "in-article-2", "in-article-3", "in-article-4", "in-article-5", "in-article-6", "in-article-7", "before-faq", "after-faq"], title: "Các ô trong bài viết", desc: "Sau khung tra cứu, giữa các mục bài, trước/sau Hỏi đáp", adsense: true },
+    { keys: ["shopee-inline"], title: "Khối deal Shopee", desc: "4 sản phẩm giữa bài — ảnh lấy từ danh sách deal" },
+    { keys: ["fly"], title: "Icon Shopee nổi", desc: "Ảnh tròn góc phải, hiện khi người xem cuộn trang" },
+    { keys: ["popup"], title: "Popup toàn màn hình", desc: "Phần ảnh phía trên popup, hiện sau 5 giây" },
+    { keys: ["rail"], title: "2 cột dính 2 bên", desc: "Chỉ màn hình máy tính rộng ≥ 1560px", adsense: true },
+  ];
+  // Khung vẽ đúng tỉ lệ, vừa ô 150×100
+  function shape(v, ads) {
+    var sc = Math.min(150 / v[0], 100 / v[1]);
+    return '<div class="stage-shape"><span class="shape' + (ads ? " ads" : "") + '" style="width:' + Math.max(28, Math.round(v[0] * sc)) + "px;height:" + Math.max(20, Math.round(v[1] * sc)) + 'px">' + wh(v) + "</span></div>";
+  }
+  function devBox(k, v, ads) {
+    var head = '<div class="dev-box-head">' + DEV[k][0] + (k === "both" ? "Điện thoại & máy tính" : DEV[k][1]) + "</div>";
+    if (!v) return '<div class="dev-box">' + head + '<div class="dev-none">Không hiện trên ' + DEV[k][1].toLowerCase() + "</div></div>";
+    return '<div class="dev-box">' + head + shape(v, ads) +
+      '<div class="dev-meta"><b>' + wh(v) + '</b><span class="std">' + v[2] + "</span><small>Xuất ảnh " + (v[0] * 2) + "×" + (v[1] * 2) + " px (gấp đôi cho nét)</small></div></div>";
+  }
+  var kitDone = {};
+  function renderSizeTable() {
+    // Bộ ảnh duy nhất cần làm (chỉ tính vị trí mặc định là Shopee + khổ banner Shopee dùng lại ở ô trong bài)
+    var files = [];
+    var add = function (v, where) {
+      var id = wh(v), f = files.find(function (x) { return x.id === id; });
+      if (f) { if (f.where.indexOf(where) < 0) f.where.push(where); } else files.push({ id: id, v: v, where: [where] });
+    };
+    KITS.forEach(function (kit) {
+      if (kit.adsense) return; // ô AdSense không cần làm ảnh
+      var z = sizesOf(SLOTS.find(function (x) { return x.key === kit.keys[0]; }));
+      ["both", "mob", "pc"].forEach(function (k) { if (z[k]) add(z[k], kit.title + (k === "both" ? "" : " · " + (k === "mob" ? "ĐT" : "PC"))); });
+    });
+    $("#kit-count").textContent = files.length;
+    $("#kit-files").innerHTML = files.map(function (f) {
+      return '<label class="kit-file' + (kitDone[f.id] ? " done" : "") + '"><input type="checkbox" data-kit="' + f.id + '"' + (kitDone[f.id] ? " checked" : "") + ">" +
+        shape(f.v).replace('class="stage-shape"', 'class="stage-shape" style="height:70px"').replace(/width:(\d+)px;height:(\d+)px/, function (m, w, h) { var r = Math.min(1, 120 / w, 60 / h); return "width:" + Math.max(24, Math.round(w * r)) + "px;height:" + Math.max(18, Math.round(h * r)) + "px;font-size:11px"; }) +
+        "<b>" + f.id + "</b><small>" + f.where.join("<br>") + "</small></label>";
+    }).join("");
+    $("#kit-progress").textContent = files.filter(function (f) { return kitDone[f.id]; }).length + "/" + files.length + " đã xong";
+
+    $("#kits").innerHTML = KITS.map(function (kit) {
+      var first = SLOTS.find(function (x) { return x.key === kit.keys[0]; });
+      var z = sizesOf(first), ads = !!kit.adsense;
+      var nums = kit.keys.map(function (k) {
+        var i = SLOTS.findIndex(function (x) { return x.key === k; });
+        return '<span class="num" style="background:' + SRC_COLOR[SLOTS[i].src] + '">' + (i + 1) + "</span>";
+      }).join("");
+      var src = ads ? '<span class="src src-adsense kit-src">AdSense</span>' : '<span class="src src-shopee kit-src">Shopee</span>';
+      var devs = z.both ? '<div class="kit-devs one">' + devBox("both", z.both, ads) + "</div>"
+        : '<div class="kit-devs">' + devBox("mob", z.mob, ads) + devBox("pc", z.pc, ads) + "</div>";
+      var alt = ads && kit.keys[0] !== "rail"
+        ? '<div class="ads-alt">Mặc định chạy <b>Google AdSense</b> — không cần làm ảnh. Khổ trên chỉ dùng khi đổi ô sang <b>banner Shopee</b> (dùng chung bộ ảnh với "Đầu khung tra cứu").</div>'
+        : ads ? '<div class="ads-alt">Chỉ chạy Google AdSense — không cần làm ảnh.</div>' : "";
+      return '<div class="kit"><div class="kit-head"><div class="kit-nums">' + nums + "</div><div><h3>" + kit.title + "</h3><p>" + kit.desc + "</p></div>" + src + "</div>" + devs + alt + "</div>";
+    }).join("");
+  }
+  document.addEventListener("change", function (e) {
+    var id = e.target.dataset && e.target.dataset.kit;
+    if (id) { kitDone[id] = e.target.checked; renderSizeTable(); }
+  });
+  var ICON_BACK = "<svg class=\"i\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m15 18-6-6 6-6\"/></svg>";
+  var ICON_IMAGE = "<svg class=\"i\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><circle cx=\"9\" cy=\"10\" r=\"1.6\"/><path d=\"m21 16-5-5-9 8\"/></svg>";
+  var ICON_UPLOAD = "<svg class=\"i\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 16V4\"/><path d=\"m7 9 5-5 5 5\"/><path d=\"M4 20h16\"/></svg>";
+  var SRC_COLOR = { shopee: "#ee4d2d", deals: "#ee4d2d", adsense: "#1a73e8", off: "#9aa0a6" };
+  var GROUPS = [
+    { name: "Đầu trang", keys: ["anchor", "in-lookup", "after-lookup"] },
+    { name: "Trong bài viết", keys: ["in-article-1", "in-article-2", "in-article-3", "in-article-4", "in-article-5", "in-article-6", "shopee-inline", "in-article-7", "before-faq", "after-faq"] },
+    { name: "Nổi & toàn màn hình", keys: ["fly", "popup"] },
+    { name: "Chỉ trên máy tính", keys: ["rail"] },
+  ];
+  var RATIO = { anchor: "320 / 100", "in-lookup": "300 / 250", fly: "1 / 1", popup: "3 / 2" };
+  var filter = "all";
+  var state = {};
+  SLOTS.forEach(function (s) { state[s.key] = { src: s.src, link: "", img: {} }; });
+  var adsenseOn = false;
+  var selected = null;
+  var frame = document.getElementById("frame");
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+
+  /* ---------- Tab ---------- */
+  $("#nav").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-tab]");
+    if (!b) return;
+    document.querySelectorAll("#nav button").forEach(function (x) { x.classList.toggle("active", x === b); });
+    document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("active", p.id === "page-" + b.dataset.tab); });
+  });
+
+  /* ---------- Trạng thái từng vị trí ---------- */
+  function statusOf(s) {
+    var st = state[s.key];
+    if (st.src === "off") return ["Đã tắt", "st-off"];
+    if (st.src === "adsense") return adsenseOn ? ["Đang chạy", "st-ok"] : ["Chờ mã AdSense", "st-warn"];
+    if (st.src === "deals") return dealCount() ? ["Đang chạy", "st-ok"] : ["Chưa có deal", "st-warn"];
+    return (st.link || $("#shopee-link").value.trim()) ? ["Đang chạy", "st-ok"] : ["Thiếu link", "st-warn"];
+  }
+  var SRC_LABEL = { shopee: ["Shopee", "src-shopee"], adsense: ["AdSense", "src-adsense"], off: ["Tắt", "src-off"], deals: ["Shopee", "src-shopee"] };
+
+  var FILTERS = [
+    { k: "all", t: "Tất cả vị trí", c: "#3c4048" },
+    { k: "st-ok", t: "Đang chạy", c: "#0f9d58" },
+    { k: "st-warn", t: "Cần điền", c: "#b06000" },
+    { k: "st-off", t: "Đã tắt", c: "#9aa0a6" },
+  ];
+  function renderList() {
+    var count = { all: SLOTS.length, "st-ok": 0, "st-warn": 0, "st-off": 0 };
+    SLOTS.forEach(function (s) { count[statusOf(s)[1]]++; });
+    $("#stats").innerHTML = FILTERS.map(function (f) {
+      return '<button class="stat' + (filter === f.k ? " active" : "") + '" data-filter="' + f.k + '" style="--c:' + f.c + '"><b>' + count[f.k] + "</b><span>" + (f.k === "all" ? "" : '<i class="dot"></i>') + f.t + "</span></button>";
+    }).join("");
+    $("#list-title").textContent = FILTERS.find(function (f) { return f.k === filter; }).t;
+    var html = "";
+    GROUPS.forEach(function (g) {
+      var rows = g.keys.map(function (k) { return SLOTS.find(function (x) { return x.key === k; }); })
+        .filter(function (s) { return filter === "all" || statusOf(s)[1] === filter; });
+      if (!rows.length) return;
+      html += '<div class="group-head">' + g.name + "</div>";
+      html += rows.map(function (s) {
+        var i = SLOTS.indexOf(s), st = statusOf(s), sl = SRC_LABEL[state[s.key].src];
+        return '<button class="slot-item' + (selected === s.key ? " sel" : "") + '" data-key="' + s.key + '">' +
+          '<span class="num" style="background:' + SRC_COLOR[state[s.key].src] + '">' + (i + 1) + "</span>" +
+          '<span class="slot-meta"><b>' + s.name + "</b><small>" + sizeText(s) + "</small></span>" +
+          '<span class="slot-side"><span class="src ' + sl[1] + '">' + sl[0] + '</span><span class="status ' + st[1] + '"><i class="dot"></i>' + st[0] + "</span></span></button>";
+      }).join("");
+    });
+    $("#slot-list").innerHTML = html || '<div class="empty-list">Không có vị trí nào ở trạng thái này.</div>';
+    $("#warn-count").textContent = count["st-warn"];
+    $("#warn-count").style.display = count["st-warn"] ? "" : "none";
+  }
+  $("#stats").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-filter]");
+    if (!b) return;
+    filter = filter === b.dataset.filter ? "all" : b.dataset.filter;
+    closeEditor();
+    renderList();
+  });
+  function closeEditor() {
+    selected = null;
+    $("#panel").classList.remove("editing");
+    if (typeof openSheet === "function") openSheet(false);
+    if (doc) highlight();
+    renderList();
+  }
+  $("#slot-list").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-key]");
+    if (b) select(b.dataset.key, true);
+  });
+
+  /* ---------- Form sửa vị trí ---------- */
+  function renderEditor() {
+    var ed = $("#editor");
+    if (!selected) { ed.innerHTML = '<p class="hint" style="margin:0">Chọn 1 vị trí để chỉnh.</p>'; return; }
+    var s = SLOTS.find(function (x) { return x.key === selected; });
+    var st = state[s.key];
+    var idx = SLOTS.indexOf(s) + 1;
+    var html = '<div class="ed-head"><button type="button" class="ed-back" id="ed-back">' + ICON_BACK + '<span class="lbl-desk">Quay lại danh sách vị trí</span><span class="lbl-mob">Đóng</span></button></div>' +
+      '<h3><span class="num" style="background:' + SRC_COLOR[st.src] + '">' + idx + "</span>" + s.name + "</h3>" +
+      '<p class="where">' + s.where + "</p>";
+    if (s.src === "deals") {
+      html += '<div class="note">Khối này lấy 4 deal đầu trong tab <b>Shopee &amp; deal</b>. <a href="#" data-go="shopee">Sửa danh sách deal →</a></div>' +
+        '<div class="field" style="margin-top:12px"><div class="switch"><span class="label" style="margin:0">Hiện khối này</span><input type="checkbox" id="ed-on"' + (st.src !== "off" ? " checked" : "") + "></div></div>";
+      $("#editor").innerHTML = html;
+      $("#ed-on").onchange = function () { st.src = this.checked ? "deals" : "off"; applyToFrame(s); changed(); };
+      $("[data-go]", ed).onclick = function (e) { e.preventDefault(); $('#nav [data-tab="shopee"]').click(); };
+      return;
+    }
+    var canAdsense = s.key !== "fly" && s.key !== "popup";
+    var canShopee = s.key !== "rail";
+    html += '<div class="field"><span class="label">Hiển thị gì ở đây?</span><div class="radios">' +
+      (canShopee ? radio("shopee", "Banner Shopee", "ảnh + link của bạn") : "") +
+      (canAdsense ? radio("adsense", "Google AdSense", "Google tự chọn") : "") +
+      radio("off", "Tắt", "ẩn vị trí này") + "</div></div>";
+    if (st.src === "shopee") {
+      var z = sizesOf(s);
+      html += '<div class="field"><span class="label">Ảnh banner — mỗi thiết bị 1 ảnh đúng khổ</span>' +
+        devKeys(s).map(function (k) {
+          var v = z[k], im = st.img[k] || "";
+          return '<div class="dev-label">' + DEV[k][0] + DEV[k][1] + "<b>" + wh(v) + "</b></div>" +
+            '<label class="drop" data-dev="' + k + '"><span class="thumb' + (im ? " has-img" : "") + '" style="aspect-ratio:' + v[0] + " / " + v[1] + (im ? ";background-image:url(&quot;" + escAttr(im) + "&quot;)" : "") + '">' + ICON_IMAGE + "</span>" +
+            '<span><b class="drop-cta">' + ICON_UPLOAD + (im ? "Đổi ảnh khác" : "Bấm hoặc kéo ảnh vào") + "</b><small>" + v[2] + " · khổ " + wh(v) + ", nên xuất " + (v[0] * 2) + "×" + (v[1] * 2) + " cho nét. Tối đa 5MB.</small></span>" +
+            '<input type="file" accept="image/*" hidden></label>' +
+            '<input type="url" class="img-url" data-dev="' + k + '" placeholder="hoặc dán link ảnh https://..." value="' + escAttr(im.indexOf("blob:") === 0 ? "" : im) + '" style="margin-top:6px">';
+        }).join("") +
+        '<div class="help">Thiếu ảnh cho thiết bị nào → web tự dựng banner cam Shopee từ các deal ở thiết bị đó.</div></div>' +
+        '<div class="field"><label for="ed-link">Link khi bấm vào</label><input type="url" id="ed-link" placeholder="https://s.shopee.vn/..." value="' + escAttr(st.link) + '">' +
+        '<div class="err" id="ed-link-err" hidden>Link phải bắt đầu bằng https://</div>' +
+        '<div class="help">Để trống = dùng link Shopee chung (tab Shopee &amp; deal).</div></div>';
+    } else if (st.src === "adsense") {
+      html += '<div class="note' + (adsenseOn ? "" : " warn") + '">' + (adsenseOn
+        ? "Google tự chọn quảng cáo vừa khung — không cần làm ảnh. Điện thoại thường ra " + ADSENSE_HINT.mob + "; máy tính " + ADSENSE_HINT.pc + "."
+        : 'Chưa có mã AdSense — vị trí này đang ẩn. <a href="#" data-go="adsense">Điền mã AdSense →</a>') + "</div>";
+    } else {
+      html += '<div class="note warn">Vị trí này đang ẩn trên web, không chiếm chỗ.</div>';
+    }
+    ed.innerHTML = html;
+    ed.querySelectorAll("input[name=src]").forEach(function (r) {
+      r.onchange = function () { st.src = this.value; renderEditor(); applyToFrame(s); changed(); };
+    });
+    var go = $("[data-go]", ed);
+    if (go) go.onclick = function (e) { e.preventDefault(); $('#nav [data-tab="' + go.dataset.go + '"]').click(); };
+    ed.querySelectorAll(".drop[data-dev]").forEach(function (drop) {
+      var k = drop.dataset.dev;
+      var take = function (f) {
+        if (!f || !/^image\//.test(f.type)) return toast("Chỉ nhận file ảnh (JPG, PNG, WebP).");
+        if (f.size > 5 * 1024 * 1024) return toast("Ảnh quá 5MB, hãy chọn ảnh nhẹ hơn.");
+        st.img[k] = URL.createObjectURL(f);
+        if (k !== "both" && ((k === "mob") !== (device === "phone"))) setDevice(k === "mob" ? "phone" : "desk");
+        renderEditor(); applyToFrame(s); changed();
+        toast("Đã thay ảnh " + DEV[k][1].toLowerCase() + " — xem ngay bên trái.");
+      };
+      drop.querySelector("input[type=file]").onchange = function () { take(this.files[0]); };
+      ["dragover", "dragenter"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+      ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function () { drop.classList.remove("over"); }); });
+      drop.addEventListener("drop", function (e) { e.preventDefault(); take(e.dataTransfer.files[0]); });
+    });
+    ed.querySelectorAll(".img-url").forEach(function (inp) {
+      inp.onchange = function () { st.img[this.dataset.dev] = this.value.trim(); applyToFrame(s); changed(); };
+    });
+    if ($("#ed-link", ed)) {
+      $("#ed-link", ed).oninput = function () {
+        var ok = !this.value.trim() || /^https?:\/\/\S+$/.test(this.value.trim());
+        this.classList.toggle("invalid", !ok);
+        $("#ed-link-err", ed).hidden = ok;
+        if (ok) { st.link = this.value.trim(); renderList(); changed(); }
+      };
+    }
+    function radio(v, t, sub) {
+      return '<label><input type="radio" name="src" value="' + v + '"' + (st.src === v ? " checked" : "") + ">" + t + "<small>" + sub + "</small></label>";
+    }
+  }
+
+  /* ---------- Trang web xem trước (iframe) ---------- */
+  var doc = null;
+  var ORIG = {};
+  frame.addEventListener("load", function () {
+    doc = frame.contentDocument;
+    var css = doc.createElement("style");
+    css.textContent =
+      ".ad-mock-tag,.mock-intents,.mock-vignette{display:none!important}" +
+      ".shopee-pop{display:none!important}.pn-show-pop .shopee-pop{display:flex!important}" +
+      "html.shopee-pop-open:not(.pn-show-pop){overflow:auto!important}" +
+      ".shopee-fly{display:block!important}" +
+      ".pn-hl{outline:2px dashed var(--pn-c,#1a73e8)!important;outline-offset:-2px;cursor:pointer!important;transition:outline-color .15s}" +
+      ".pn-hl:hover{outline-style:solid!important}" +
+      ".pn-hl.pn-sel{outline:3px solid #d0011b!important;box-shadow:0 0 0 6px rgba(208,1,27,.18)!important}" +
+      ".pn-num{position:absolute;top:8px;right:8px;z-index:2147483000;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px 0 4px;border-radius:99px;background:var(--pn-c,#1a73e8);color:#fff;font:700 12px/1 system-ui;box-shadow:0 2px 8px rgba(0,0,0,.3);pointer-events:none;white-space:nowrap}" +
+      ".pn-num b{display:grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border-radius:99px;background:#fff;color:var(--pn-c,#1a73e8);font-size:12px}" +
+      ".pn-sel>.pn-num{background:#d0011b}.pn-sel>.pn-num b{color:#d0011b}" +
+      ".pn-off{opacity:.35!important;filter:grayscale(1)}" +
+      ".pn-adsense{display:flex!important;align-items:center;justify-content:center;width:100%;height:100%;min-height:90px;background:#f1f3f4;color:#5f6368;font:600 14px system-ui;border:1px solid #dadce0}";
+    doc.head.appendChild(css);
+    // Chặn mọi cú bấm trong trang xem trước: bấm vào vị trí → chọn vị trí đó
+    doc.addEventListener("click", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var hit = e.target.closest("[data-pn-key]");
+      if (hit) select(hit.getAttribute("data-pn-key"), false);
+    }, true);
+    doc.addEventListener("keydown", function (e) { if (e.key === "Escape" && selected) closeEditor(); });
+    decorate();
+    // popup & icon nổi được tạo trễ → gắn số lại vài lần
+    [800, 2000, 6000].forEach(function (t) { setTimeout(decorate, t); });
+  });
+
+  function decorate() {
+    if (!doc) return;
+    SLOTS.forEach(function (s, i) {
+      doc.querySelectorAll(s.sel).forEach(function (el, j) {
+        if (el.hasAttribute("data-pn-key")) return;
+        el.setAttribute("data-pn-key", s.key);
+        el.classList.add("pn-hl");
+        if (doc.defaultView.getComputedStyle(el).position === "static") el.style.position = "relative";
+        var n = doc.createElement("span");
+        n.className = "pn-num";
+        n.innerHTML = "<b>" + (i + 1) + "</b><span></span>";
+        el.appendChild(n);
+        if (!ORIG[s.key + j]) ORIG[s.key + j] = true;
+        applyToFrame(s);
+      });
+    });
+    if (selected) highlight();
+  }
+
+  // Phản ánh lựa chọn trong form lên trang xem trước
+  function applyToFrame(s) {
+    if (!doc) return;
+    var st = state[s.key];
+    doc.querySelectorAll('[data-pn-key="' + s.key + '"]').forEach(function (el) {
+      el.classList.toggle("pn-off", st.src === "off");
+      el.style.setProperty("--pn-c", SRC_COLOR[st.src]);
+      var lab = el.querySelector(":scope > .pn-num span");
+      if (lab) lab.textContent = SRC_LABEL[st.src][0];
+      var old = el.querySelector(":scope > .pn-adsense");
+      if (old) old.remove();
+      var inner = el.querySelector(".shopee-banner, .mock-ad, .shopee-pop-hero, .shopee-fly-media");
+      if (st.src === "adsense" && (s.src !== "adsense")) {
+        if (inner) inner.style.display = "none";
+        var a = doc.createElement("div");
+        a.className = "pn-adsense";
+        a.textContent = "Google AdSense · Google tự chọn quảng cáo";
+        el.insertBefore(a, el.firstChild);
+      } else if (inner) inner.style.display = "";
+      var img = st.img.both || st.img[device === "phone" ? "mob" : "pc"] || "";
+      if (st.src === "shopee" && img) {
+        if (s.key === "popup") {
+          var hero = el.querySelector(".shopee-pop-hero");
+          if (hero) hero.innerHTML = '<img class="shopee-pop-img" src="' + img + '" alt="">';
+        } else if (s.key === "fly") {
+          var m = el.querySelector(".shopee-fly-media");
+          if (m) m.innerHTML = '<img src="' + img + '" alt="">';
+        } else {
+          var b = el.querySelector(".shopee-banner");
+          if (b) b.innerHTML = '<img class="shopee-banner-img" src="' + img + '" alt="">';
+        }
+      }
+    });
+  }
+
+  function highlight() {
+    doc.querySelectorAll(".pn-sel").forEach(function (x) { x.classList.remove("pn-sel"); });
+    doc.querySelectorAll('[data-pn-key="' + selected + '"]').forEach(function (x) { x.classList.add("pn-sel"); });
+    doc.documentElement.classList.toggle("pn-show-pop", selected === "popup");
+  }
+
+  function select(key, fromList) {
+    selected = key;
+    $("#panel").classList.add("editing");
+    renderList(); renderEditor();
+    var s = SLOTS.find(function (x) { return x.key === key; });
+    if (s.desk && device !== "desk") setDevice("desk");
+    if (!doc) return;
+    highlight();
+    if (key === "popup" && !doc.querySelector(".shopee-pop")) toast("Popup hiện sau 5 giây kể từ lúc mở trang — chờ chút nhé.");
+    var el = doc.querySelector('[data-pn-key="' + key + '"]');
+    if (fromList && el && doc.defaultView.getComputedStyle(el).position !== "fixed") {
+      // chỉ cuộn trong khung xem trước, không kéo cả trang quản trị
+      var win = doc.defaultView, r = el.getBoundingClientRect();
+      win.scrollTo({ top: win.scrollY + r.top - win.innerHeight / 2 + r.height / 2, behavior: "smooth" });
+    }
+    if (window.innerWidth <= 1100) openSheet(true);
+  }
+
+  function openSheet(on) {
+    $("#editor").classList.toggle("open", on);
+    $("#sheet-bg").classList.toggle("open", on);
+  }
+  $("#sheet-bg").onclick = function () { closeEditor(); };
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && selected) closeEditor(); });
+  $("#editor").addEventListener("click", function (e) { if (e.target.closest("#ed-back")) closeEditor(); });
+
+  /* ---------- Điện thoại / máy tính ---------- */
+  var device = "phone";
+  function setDevice(d) {
+    device = d;
+    document.querySelectorAll("#device button").forEach(function (b) { b.classList.toggle("active", b.dataset.dev === d); });
+    var stage = $("#stage");
+    doc = null;
+    if (d === "phone") {
+      stage.innerHTML = '<div class="phone" id="phone"></div>';
+      $("#phone").appendChild(frame);
+    } else {
+      stage.innerHTML = '<div class="desk"><div class="desk-screen" id="desk"></div></div>';
+      $("#desk").appendChild(frame);
+      fitDesk();
+    }
+    frame.src = "index.html?ads=preview&pn-admin=" + Date.now();
+  }
+  function fitDesk() {
+    var box = $("#desk");
+    if (!box) return;
+    var scale = box.clientWidth / 1600;
+    frame.style.transform = "scale(" + scale + ")";
+    box.style.height = Math.round(1000 * scale) + "px";
+  }
+  window.addEventListener("resize", function () { if (device === "desk") fitDesk(); });
+  $("#device").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-dev]");
+    if (b && b.dataset.dev !== device) setDevice(b.dataset.dev);
+  });
+
+  // Chuỗi người dùng nhập (tên deal, link…) đưa vào thuộc tính HTML: phải escape, không thì dấu " làm cắt chữ / vỡ thẻ
+  function escAttr(v) {
+    return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  /* ---------- Deal ---------- */
+  var DEALS = [
+    { t: "Camera hành trình 4K ghi hình trước sau", p: "890.000đ", l: "" },
+    { t: "Nước rửa kính ô tô đậm đặc 2L", p: "45.000đ", l: "" },
+  ];
+  function dealCount() { return DEALS.filter(function (d) { return d.t; }).length; }
+  function renderDeals() {
+    $("#deals").innerHTML = DEALS.map(function (d, i) {
+      return "<tr><td><label class=\"deal-img\" title=\"Tải ảnh\"" + (d.img ? ' style="background-image:url(' + d.img + ')"' : "") + ">" + (d.img ? "" : "+") + '<input type="file" accept="image/*" hidden data-i="' + i + '"></label></td>' +
+        '<td><input type="text" value="' + escAttr(d.t) + '" data-f="t" data-i="' + i + '"></td>' +
+        '<td><input type="text" value="' + escAttr(d.p) + '" data-f="p" data-i="' + i + '"></td>' +
+        '<td><input type="url" value="' + escAttr(d.l) + '" placeholder="https://s.shopee.vn/..." data-f="l" data-i="' + i + '"></td>' +
+        '<td><button class="btn btn-sm" data-del="' + i + '" title="Xoá">✕</button></td></tr>';
+    }).join("");
+  }
+  $("#deals").addEventListener("input", function (e) {
+    var i = e.target.dataset.i;
+    if (e.target.dataset.f) { DEALS[i][e.target.dataset.f] = e.target.value; changed(); renderList(); }
+  });
+  $("#deals").addEventListener("change", function (e) {
+    if (e.target.type === "file" && e.target.files[0]) { DEALS[e.target.dataset.i].img = URL.createObjectURL(e.target.files[0]); renderDeals(); changed(); }
+  });
+  $("#deals").addEventListener("click", function (e) {
+    var d = e.target.closest("[data-del]");
+    if (d) { DEALS.splice(+d.dataset.del, 1); renderDeals(); renderList(); changed(); }
+  });
+  $("#add-deal").onclick = function () { DEALS.push({ t: "", p: "", l: "" }); renderDeals(); changed(); };
+
+  /* ---------- AdSense ---------- */
+  $("#ca-pub").addEventListener("input", function () {
+    var v = this.value.trim();
+    var ok = !v || /^ca-pub-\d{16}$/.test(v);
+    this.classList.toggle("invalid", !ok);
+    $("#ca-pub-err").hidden = ok;
+    adsenseOn = ok && !!v;
+    $("#adstxt").textContent = adsenseOn ? "google.com, " + v.replace("ca-", "") + ", DIRECT, f08c47fec0942fa0" : "(điền mã nhà xuất bản để tạo)";
+    renderList(); if (selected) renderEditor();
+  });
+
+  /* ---------- Kiểm tra link chung ---------- */
+  document.querySelectorAll("[data-url]").forEach(function (inp) {
+    inp.addEventListener("input", function () {
+      var ok = !this.value.trim() || /^https?:\/\/\S+$/.test(this.value.trim());
+      this.classList.toggle("invalid", !ok);
+      renderList(); changed();
+    });
+  });
+  document.querySelectorAll("#page-popup input, #page-site input").forEach(function (i) { i.addEventListener("input", changed); });
+
+  /* ---------- Lưu ---------- */
+  function changed() {
+    var s = $("#save-state");
+    s.textContent = "Có thay đổi chưa lưu";
+    s.classList.add("dirty");
+  }
+  $("#btn-save").onclick = function () {
+    if (document.querySelector("input.invalid")) return toast("Còn ô bị lỗi (viền đỏ) — sửa xong mới lưu được.");
+    var s = $("#save-state");
+    s.textContent = "Đang xuất bản…"; s.classList.remove("dirty");
+    setTimeout(function () {
+      s.textContent = "Đã lưu";
+      toast("Bản demo: chưa lưu thật. Bản chính thức sẽ cập nhật web sau ~2 giây.");
+    }, 900);
+  };
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-restore]")) toast("Bản demo: bản chính thức sẽ khôi phục cấu hình lúc đó và cập nhật web.");
+  });
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove("show"); }, 3200);
+  }
+
+  /* ---------- Đăng nhập (demo) ---------- */
+  var AUTH_KEY = "pn_demo_auth";
+  var loginEl = $("#login");
+  var tries = 5;
+  function unlock() { loginEl.hidden = true; document.body.classList.remove("locked"); }
+  try { if (sessionStorage.getItem(AUTH_KEY)) unlock(); } catch (e) { /* bỏ qua */ }
+  if (document.body.classList.contains("locked")) setTimeout(function () { $("#lg-user").focus(); }, 50);
+  $("#f-pass").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var err = $("#err-pass");
+    if (tries <= 0) return;
+    if ($("#lg-user").value.trim() === "admin" && $("#lg-pass").value === "demo123") {
+      err.hidden = true;
+      $("#f-pass").hidden = true; $("#f-otp").hidden = false;
+      $("#otp input").focus();
+      return;
+    }
+    tries--;
+    err.hidden = false;
+    err.textContent = tries > 0 ? "Sai tên đăng nhập hoặc mật khẩu. Còn " + tries + " lần thử." : "Nhập sai quá nhiều lần — tạm khoá 15 phút. (Demo: tải lại trang để thử lại.)";
+    if (tries <= 0) $("#btn-login").disabled = true;
+    $("#lg-pass").value = ""; $("#lg-pass").focus();
+  });
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#otp input"));
+  boxes.forEach(function (b, i) {
+    b.addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(-1);
+      if (this.value && boxes[i + 1]) boxes[i + 1].focus();
+      if (boxes.every(function (x) { return x.value; })) $("#f-otp").requestSubmit();
+    });
+    b.addEventListener("keydown", function (e) { if (e.key === "Backspace" && !this.value && boxes[i - 1]) boxes[i - 1].focus(); });
+    b.addEventListener("paste", function (e) {
+      var d = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, 6);
+      if (!d) return;
+      e.preventDefault();
+      boxes.forEach(function (x, j) { x.value = d[j] || ""; });
+      if (d.length === 6) $("#f-otp").requestSubmit();
+    });
+  });
+  $("#use-backup").onclick = function () {
+    $("#otp").hidden = true; $("#backup-field").hidden = false; $("#lg-backup").focus();
+    this.hidden = true;
+  };
+  $("#f-otp").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var code = boxes.map(function (x) { return x.value; }).join("");
+    var backup = $("#lg-backup").value.trim();
+    var ok = $("#otp").hidden ? /^[A-Z0-9]{4}-?[A-Z0-9]{4}$/i.test(backup) : (code.length === 6 && code !== "000000");
+    if (!ok) {
+      var err = $("#err-otp");
+      err.hidden = false;
+      err.textContent = "Mã không đúng hoặc đã hết hạn. Kiểm tra giờ trên điện thoại rồi thử lại.";
+      boxes.forEach(function (x) { x.value = ""; }); boxes[0].focus();
+      return;
+    }
+    try { sessionStorage.setItem(AUTH_KEY, "1"); } catch (e2) { /* bỏ qua */ }
+    unlock();
+    toast("Đăng nhập thành công.");
+  });
+
+  /* ---------- Menu tài khoản ---------- */
+  $("#user-btn").onclick = function (e) { e.stopPropagation(); $("#user-menu").hidden = !$("#user-menu").hidden; };
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".user")) $("#user-menu").hidden = true;
+    var go = e.target.closest("#user-menu [data-go]");
+    if (go) { $('#nav [data-tab="' + go.dataset.go + '"]').click(); $("#user-menu").hidden = true; }
+    if (e.target.closest("[data-demo]")) toast("Bản demo: bản chính thức sẽ thực hiện thật.");
+  });
+  $("#logout").onclick = function () { try { sessionStorage.removeItem(AUTH_KEY); } catch (e) { /* bỏ qua */ } location.reload(); };
+
+  /* ---------- Trang bảo mật ---------- */
+  $("#reset-2fa").onclick = function () {
+    $("#qr-wrap").hidden = false;
+    var c = $("#qr").getContext("2d"), n = 29;
+    c.fillStyle = "#fff"; c.fillRect(0, 0, n, n); c.fillStyle = "#111";
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (Math.random() > 0.55) c.fillRect(x, y, 1, 1);
+    [[0, 0], [n - 7, 0], [0, n - 7]].forEach(function (p) {
+      c.fillStyle = "#111"; c.fillRect(p[0], p[1], 7, 7);
+      c.fillStyle = "#fff"; c.fillRect(p[0] + 1, p[1] + 1, 5, 5);
+      c.fillStyle = "#111"; c.fillRect(p[0] + 2, p[1] + 2, 3, 3);
+    });
+    this.hidden = true;
+  };
+  $("#new-pass").addEventListener("input", function () {
+    var v = this.value, sc = 0;
+    if (v.length >= 10) sc++; if (v.length >= 14) sc++;
+    if (/[A-Z]/.test(v) && /[a-z]/.test(v)) sc++; if (/\d/.test(v)) sc++; if (/[^A-Za-z0-9]/.test(v)) sc++;
+    var lv = [["0%", "#d0011b", "Quá ngắn — tối thiểu 10 ký tự."], ["25%", "#d0011b", "Yếu"], ["50%", "#e37400", "Tạm được"], ["75%", "#0f9d58", "Mạnh"], ["100%", "#0f9d58", "Rất mạnh"]][v.length < 10 ? 0 : Math.min(4, sc - 0)];
+    $("#meter").style.width = lv[0]; $("#meter").style.background = lv[1]; $("#meter-text").textContent = lv[2];
+  });
+
+  renderDeals();
+  renderSizeTable();
+  renderList();
+  renderEditor();
+  setDevice("phone");
+})();
+</script>
+</body>
+</html>

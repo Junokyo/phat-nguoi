@@ -1,0 +1,19 @@
+# Phạt Nguội
+
+> Công cụ tra cứu phạt nguội (vi phạm giao thông ghi nhận qua camera) miễn phí cho ô tô, xe máy, xe máy điện tại Việt Nam, kèm hướng dẫn xử lý và nộp phạt. Website độc lập, không trực thuộc Cục Cảnh sát giao thông; kết quả mang tính tham khảo.
+
+Kênh tra cứu chính thức: Cổng thông tin điện tử Cục Cảnh sát giao thông (csgt.bocongan.gov.vn) và ứng dụng VNeTraffic.
+
+## Trang chính
+- [Tra cứu phạt nguội](https://junokyo.github.io/phat-nguoi/): ô tra cứu theo biển số, hướng dẫn, lỗi thường gặp, cách xử lý và nộp phạt, câu hỏi thường gặp, căn cứ pháp lý
+- [Giới thiệu](https://junokyo.github.io/phat-nguoi/gioi-thieu.html): chúng tôi là ai, cách biên tập nội dung
+- [Liên hệ](https://junokyo.github.io/phat-nguoi/lien-he.html)
+
+## Căn cứ pháp lý được dùng
+- Luật Xử lý vi phạm hành chính 15/2012/QH13 (sửa đổi 67/2020/QH14): thời hạn chấp hành 10 ngày (Điều 73), thời hiệu thi hành 01 năm (Điều 74), tiền chậm nộp 0,05%/ngày (Điều 78)
+- Nghị định 168/2024/NĐ-CP: mức phạt vi phạm giao thông đường bộ
+- Thông tư 73/2024/TT-BCA: quy trình xử lý, thông báo vi phạm ghi nhận qua thiết bị kỹ thuật
+
+## Chính sách
+- [Chính sách bảo mật](https://junokyo.github.io/phat-nguoi/chinh-sach-bao-mat.html)
+- [Điều khoản sử dụng](https://junokyo.github.io/phat-nguoi/dieu-khoan-su-dung.html)
